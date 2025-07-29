@@ -1,0 +1,55 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.VC.db
+
+# Rider
+.idea/
+*.sln.iml
+
+# Build results
+[Ll]og/
+*.log
+*.cache
+*.db
+*.db-shm
+*.db-wal
+
+# VSCode
+.vscode/
+
+# Paket
+.paket/
+paket-files/
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# TFS
+$tf/
+
+# Test results
+TestResults/
+*.trx
+
+# DotCover
+*.dotCover
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+*.nuspec
+
+# Azure
+.swa/
+
+# Others
+*.DS_Store
+*.swp
+*.swo
