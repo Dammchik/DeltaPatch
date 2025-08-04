@@ -1,6 +1,7 @@
 ﻿using DeltaPatchCore.ByteEditing;
 using DeltaPatchCore.Delta;
 using DeltaPatchCore.ImageLoader;
+using DeltaPatchCore.Interfaces;
 using System.Diagnostics;
 
 namespace DeltaPatch
@@ -19,7 +20,8 @@ namespace DeltaPatch
             Console.WriteLine($"Сгенерирован массив {width} x {height} = {data.Length} байт");
             Print2D(data, width, height);
 
-            var history = new History();
+            IDiffStrategy strategy = SelectStrategy();
+            var history = new History(strategy);
 
             // 2. Цикл команд
             while (true)
@@ -114,6 +116,26 @@ namespace DeltaPatch
                     Console.Write($"{data[y * width + x],3} ");
                 }
                 Console.WriteLine();
+            }
+        }
+
+        static IDiffStrategy SelectStrategy()
+        {
+            while (true)
+            {
+                Console.WriteLine("\nВыберите стратегию дифференцирования:");
+                Console.WriteLine("1 - ByteDiff (побайтовая)");
+                Console.WriteLine("2 - BlockDiff (DeltaQ, блочная)");
+
+                Console.Write("Ваш выбор [1/2]: ");
+                string? choice = Console.ReadLine()?.Trim();
+
+                return choice switch
+                {
+                    "1" => new ByteDiffStrategy(),
+                    "2" => new BlockDiffStrategy(),
+                    _ => throw new ArgumentException("Неверный выбор. Повторите.")
+                };
             }
         }
     }

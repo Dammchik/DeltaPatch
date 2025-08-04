@@ -1,15 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using DeltaQ;
+using DeltaQ.BsDiff;
 
 namespace DeltaPatchCore.Delta
 {
     public class DeltaPatch
     {
-        private readonly List<DeltaPatchEntry> _entries;
+        private readonly List<DeltaPatchEntry>? _entries;   // побайтовые изменения
+        private readonly byte[]? _blockDelta;               // блочный патч (DeltaQ)
 
         public DeltaPatch(IEnumerable<DeltaPatchEntry> entries)
         {
             _entries = new List<DeltaPatchEntry>(entries);
+        }
+
+        public DeltaPatch(byte[] blockDelta)
+        {
+            _blockDelta = blockDelta;
         }
 
         public static DeltaPatch Create(byte[] oldData, byte[] newData)
@@ -30,18 +39,43 @@ namespace DeltaPatchCore.Delta
 
         public void Apply(byte[] data)
         {
-            for (int i = 0; i < _entries.Count; i++)
+            if (_blockDelta != null)
             {
-                var entry = _entries[i];
-                // меняем байт и переворачиваем патч
-                byte tmp = data[entry.Index];
-                data[entry.Index] = entry.OldValue;
+                using var baseStream = new MemoryStream(data);
+                using var delta = new MemoryStream(_blockDelta);
+                using var output = new MemoryStream();
 
-                _entries[i] = new DeltaPatchEntry(entry.Index, tmp, entry.OldValue); // swap
+                Patch.Apply(baseStream.ToArray(), delta.ToArray(), output);
+
+                // Копируем результат поверх оригинала
+                var patched = output.ToArray();
+                Array.Copy(patched, data, patched.Length);
+            }
+            else if (_entries != null)
+            {
+                for (int i = 0; i < _entries.Count; i++)
+                {
+                    var entry = _entries[i];
+                    byte tmp = data[entry.Index];
+                    data[entry.Index] = entry.OldValue;
+
+                    _entries[i] = new DeltaPatchEntry(entry.Index, tmp, entry.OldValue); // swap
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException("Патч не инициализирован");
             }
         }
 
-        public int Count => _entries.Count;
+        public int Count
+        {
+            get
+            {
+                if (_entries != null) return _entries.Count;
+                if (_blockDelta != null) return _blockDelta.Length;
+                return 0;
+            }
+        }
     }
-
 }
